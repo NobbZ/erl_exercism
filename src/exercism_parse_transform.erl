@@ -12,6 +12,8 @@ parse_transform(Form, _Option) ->
     {ok, ModuleName} = extract_tested_module(TestModuleName),
     io:format("ModuleName: ~p~n~n~p~n", [TestModuleName, Form]),
 
+    io:format("is_example: ~p", [is_example()]),
+
     Form1 = case is_example() of
         false ->
             Form;
