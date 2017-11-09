@@ -10,19 +10,13 @@
 parse_transform(Form, _Option) ->
     {ok, TestModuleName} = find_module_name(Form),
     {ok, ModuleName} = extract_tested_module(TestModuleName),
-    io:format("ModuleName: ~p~n~n~p~n", [TestModuleName, Form]),
 
-    io:format("is_example: ~p", [is_example()]),
-
-    Form1 = case is_example() of
+    case is_example() of
         false ->
             Form;
         true ->
             parse_trans:plain_transform(fun (F) -> do_transform(F, ModuleName) end, Form)
-    end,
-
-    io:format("~p~n", [Form1]),
-    Form1.
+    end.
 
 %%====================================================================
 %% Internal functions
