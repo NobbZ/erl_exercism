@@ -9,7 +9,7 @@
 
 parse_transform(Form, _Option) ->
     io:format("~p~n", [Form]),
-    Form
+    Form.
 
 %%====================================================================
 %% Internal functions
