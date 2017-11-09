@@ -8,8 +8,8 @@
 %%====================================================================
 
 parse_transform(Form, _Option) ->
-    sut(foo),
-    io:format("~p~n", [Form]),
+    {ok, TestModuleName} = find_module_name(Form),
+    io:format("ModuleName: ~p~n~n~p~n", [TestModuleName, Form]),
     Form.
 
 %%====================================================================
@@ -24,3 +24,7 @@ sut(Module) ->
     end,
     io:format("Subject under test: ~p~n", [SUT]),
     SUT.
+
+find_module_name([]) -> {error, notfound};
+find_module_name([{attribute,_Line,module,Module}|_]) -> {ok, Module};
+find_module_name([_|T]) -> find_module_name(T).
