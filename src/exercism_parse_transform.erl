@@ -30,7 +30,7 @@ parse_transform(Form, _Option) ->
 
 is_example() ->
     {ok, Files} = file:list_dir("./src"),
-    lists:member("exaple.erl", Files).
+    lists:member("example.erl", Files).
 
 find_module_name([]) -> {error, notfound};
 find_module_name([{attribute,_Line,module,Module}|_]) -> {ok, Module};
