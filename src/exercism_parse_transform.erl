@@ -46,6 +46,7 @@ extract_tested_module(ModuleName) when is_atom(ModuleName) ->
             error
     end.
 
+replace_foreign_calls([], _) -> [];
 replace_foreign_calls([{function,LINE,Name,Arity,Clauses}|T], ModuleName) ->
     [{function, LINE, Name, Arity, replace_foreign_calls_in_clauses(Clauses, ModuleName)}
     |replace_foreign_calls(T, ModuleName)];
