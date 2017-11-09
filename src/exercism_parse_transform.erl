@@ -44,7 +44,14 @@ extract_tested_module(ModuleName) when is_atom(ModuleName) ->
             error
     end.
 
-replace_foreign_calls(F, _) -> F.
+replace_foreign_calls([{function,LINE,Name,Arity,Clauses}|T], ModuleName) ->
+    [{function, LINE, Name, Arity, replace_foreign_calls_in_clauses(Clauses, ModuleName)}
+    |replace_foreign_calls(T, ModuleName)].
+
+replace_foreign_calls_in_clauses([], _) -> [];
+replace_foreign_calls_in_clauses([C|CS], ModuleName) ->
+    io:format("Clause: ~p~n", [C]),
+    [C|replace_foreign_calls_in_clauses(CS, ModuleName)].
 
 %%====================================================================
 %% Internal testing
