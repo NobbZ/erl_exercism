@@ -55,11 +55,42 @@ do_transform(_Form, _ModuleName) ->
 
 -define(_assertExtract(Exp, Module), ?_assertMatch(Exp, extract_tested_module(Module))).
 
+to_form(String) ->
+    {ok, Tokens, _} = erl_scan:string(String),
+    {ok, Form} = erl_parse:parse_form(Tokens),
+    case is_list(Form) of
+        true  -> Form;
+        false -> [Form]
+    end.
+
 extract_tested_module_test_() ->
     [?_assertExtract({ok, hello_world}, hello_world_tests)
     ,?_assertExtract({ok, zipper},      zipper_tests)
     ,?_assertExtract(error,             hello_world)
     ,?_assertExtract(error,             zipper)
     ].
+
+singlecall() ->
+    to_form("f() -> foo:bar().").
+
+singlecall_exp() ->
+    to_form("f() -> example:bar().").
+
+singlecall_test() ->
+    Transformed = parse_trans:plain_transform(fun (F) -> do_transform(F, foo) end,
+        singlecall()),
+    ?assertEqual(singlecall_exp(), Transformed).
+
+
+nestedcall() ->
+    to_form("f() -> foo:bar(foo:bar()).").
+
+nestedcall_exp() ->
+    to_form("f() -> example:bar(example:bar()).").
+
+nestedcall_test() ->
+    Transformed = parse_trans:plain_transform(fun (F) -> do_transform(F, foo) end,
+        nestedcall()),
+    ?assertEqual(nestedcall_exp(), Transformed).
 
 -endif.
