@@ -1,6 +1,6 @@
 {application, erl_exercism,
  [{description, "An helper library for exercisms erlang exercises"},
-  {vsn, "0.1.0"},
+  {vsn, "0.1.1"},
   {registered, []},
   {applications,
    [kernel,
