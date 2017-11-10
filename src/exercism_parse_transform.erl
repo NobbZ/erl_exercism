@@ -33,8 +33,8 @@ find_module_name([_|T]) -> find_module_name(T).
 extract_tested_module(ModuleName) when is_atom(ModuleName) ->
     ModuleName1 = atom_to_list(ModuleName),
     case re:run(ModuleName1, "^(.*)_tests$") of
-        {match, [_, {Start, Length}]} ->
-            ModuleName2 = string:slice(ModuleName1, Start, Length),
+        {match, [_, {0, Length}]} ->
+            {ModuleName2, _} = lists:split(Length, ModuleName1),
             {ok, list_to_atom(ModuleName2)};
         _ ->
             error
