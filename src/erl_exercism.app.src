@@ -13,5 +13,7 @@
     "Norbert Melzer"
   ]},
   {licenses, ["MIT"]},
-  {links, []}
+  {links, [
+    {"Github", "https://github.com/NobbZ/erl_exercism"}
+  ]}
  ]}.
