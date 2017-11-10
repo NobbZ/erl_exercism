@@ -9,7 +9,9 @@
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
+  {maintainers, [
+    "Norbert Melzer"
+  ]},
   {licenses, ["MIT"]},
   {links, []}
  ]}.
