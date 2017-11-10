@@ -15,7 +15,7 @@ parse_transform(Form, _Option) ->
         false ->
             Form;
         true ->
-            parse_trans:plain_transform(fun (F) -> do_transform(F, ModuleName) end, Form)
+            parse_trans:plain_transform(transform_fun(ModuleName), Form)
     end.
 
 %%====================================================================
@@ -40,8 +40,10 @@ extract_tested_module(ModuleName) when is_atom(ModuleName) ->
             error
     end.
 
+transform_fun(Module) -> fun(F) -> do_transform(F, Module) end.
+
 do_transform({call, LCall, {remote, LRemote, {atom, L1, ModuleName}, Fn}, Args}, ModuleName) ->
-    TransformedArgs = parse_trans:plain_transform(fun (F) -> do_transform(F, ModuleName) end, Args),
+    TransformedArgs = parse_trans:plain_transform(transform_fun(ModuleName), Args),
     {call, LCall, {remote, LRemote, {atom, L1, example}, Fn}, TransformedArgs};
 do_transform(_Form, _ModuleName) ->
     continue.
@@ -70,27 +72,13 @@ extract_tested_module_test_() ->
     ,?_assertExtract(error,             zipper)
     ].
 
-singlecall() ->
-    to_form("f() -> foo:bar().").
-
-singlecall_exp() ->
-    to_form("f() -> example:bar().").
-
-singlecall_test() ->
-    Transformed = parse_trans:plain_transform(fun (F) -> do_transform(F, foo) end,
-        singlecall()),
-    ?assertEqual(singlecall_exp(), Transformed).
-
-
-nestedcall() ->
-    to_form("f() -> foo:bar(foo:bar()).").
-
-nestedcall_exp() ->
-    to_form("f() -> example:bar(example:bar()).").
-
-nestedcall_test() ->
-    Transformed = parse_trans:plain_transform(fun (F) -> do_transform(F, foo) end,
-        nestedcall()),
-    ?assertEqual(nestedcall_exp(), Transformed).
+transform_test_() ->
+    Lines =
+        [ {"f() -> foo:bar().",          "f() -> example:bar().",              foo}
+        , {"f() -> foo:bar(foo:bar()).", "f() -> example:bar(example:bar()).", foo}
+        , {"f() -> foo:bar(foo:bar()).", "f() -> foo:bar(foo:bar()).",         bar}],
+    Forms = lists:map(fun({From, To, Remote}) -> {to_form(From), to_form(To), Remote} end, Lines),
+    Transformed = lists:map(fun({From, To, Remote}) -> {parse_trans:plain_transform(transform_fun(Remote), From), To} end, Forms),
+    lists:map(fun({Act, Exp}) -> ?_assertMatch(Exp, Act) end, Transformed).
 
 -endif.
