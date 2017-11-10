@@ -41,7 +41,8 @@ extract_tested_module(ModuleName) when is_atom(ModuleName) ->
     end.
 
 do_transform({call, LCall, {remote, LRemote, {atom, L1, ModuleName}, Fn}, Args}, ModuleName) ->
-    {call, LCall, {remote, LRemote, {atom, L1, example}, Fn}, Args};
+    TransformedArgs = parse_trans:plain_transform(fun (F) -> do_transform(F, ModuleName) end, Args),
+    {call, LCall, {remote, LRemote, {atom, L1, example}, Fn}, TransformedArgs};
 do_transform(_Form, _ModuleName) ->
     continue.
 
