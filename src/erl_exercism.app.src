@@ -1,5 +1,5 @@
 {application, erl_exercism,
- [{description, "An OTP library"},
+ [{description, "An helper library for exercisms erlang exercises"},
   {vsn, "0.1.0"},
   {registered, []},
   {applications,
