@@ -26,12 +26,12 @@ jobs:
     strategy:
       matrix:
         otp: ${{fromJson(needs.create_otp_matrix.outputs.otps)}}
-        rebar3: ['3.18.0']
+    if: ${{ matrix.otp != "21.3" }}
     steps:
       - uses: actions/checkout@v2
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
-          rebar3-version: ${{matrix.rebar3}}
+          rebar3-version: '3.18.0'
       - run: rebar3 compile
       - run: rebar3 eunit
