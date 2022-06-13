@@ -22,6 +22,7 @@ jobs:
   test:
     runs-on: ubuntu-20.04
     name: Erlang/OTP ${{matrix.otp}} / rebar3 ${{matrix.rebar3}}
+    needs: [create_otp_matrix]
     strategy:
       matrix:
         otp: ${{fromJson(needs.create_otp_matrix.outputs.otps)}}
