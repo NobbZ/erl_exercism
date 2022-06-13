@@ -1,12 +1,29 @@
-on: push
+on: [push, pull_request]
 
 jobs:
+  create_otp_matrix:
+    name: Generate a list of last OTP versions
+    runs-on: ubuntu-latest
+    outputs:
+      otps: ${{ steps.versions.outputs.versions }}
+    steps:
+    - name: Clone the repository
+      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
+    - name: Get latest OTP versions
+      id: versions
+      env: 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        all_versions=$(gh api graphql -f query='query { repository(owner: "erlang", name: "otp") { releases(last: 100) { nodes { tagName } } } }' --jq '.data.repository.releases.nodes[].tagName | select(. | contains("rc") | not) | .[4:8]' | sort -u -n)
+        latest_versions=$(./.github/bin/get_latest_majors_for_ci_matrix.py <<< "$all_versions")
+        printf "::set-output name=versions::%s" "$latest_versions"
+
   test:
     runs-on: ubuntu-20.04
     name: Erlang/OTP ${{matrix.otp}} / rebar3 ${{matrix.rebar3}}
     strategy:
       matrix:
-        otp: ['18.3', '25.0']
+        otp: ${{fromJson(needs.create_otp_matrix.outputs.otps)}}
         rebar3: ['3.18.0']
     steps:
       - uses: actions/checkout@v2
