@@ -26,7 +26,8 @@ jobs:
     strategy:
       matrix:
         otp: ${{fromJson(needs.create_otp_matrix.outputs.otps)}}
-    if: ${{ matrix.otp != "21.3" }}
+        exclude:
+        - otp: '21.3'
     steps:
       - uses: actions/checkout@v2
       - uses: erlef/setup-beam@v1
