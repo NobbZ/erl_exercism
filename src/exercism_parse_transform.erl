@@ -57,6 +57,10 @@ do_transform(_Form, _ModuleName) ->
 
 -define(_assertExtract(Exp, Module), ?_assertMatch(Exp, extract_tested_module(Module))).
 
+to_test_name(Text, Exp, Act) ->
+    IoList = io_lib:format("~s (~p; ~p)", [Text, Exp, Act]),
+    erlang:iolist_to_binary(IoList).
+
 to_form(String) ->
     {ok, Tokens, _} = erl_scan:string(String),
     {ok, Form} = erl_parse:parse_form(Tokens),
@@ -88,5 +92,39 @@ transform_test_() ->
         Forms
     ),
     lists:map(fun({Act, Exp}) -> ?_assertMatch(Exp, Act) end, Transformed).
+
+find_module_name_test_() ->
+    Modules = [
+        {"-module(foo).", foo, foo_tests, error},
+        {"-module(foo_tests).", foo_tests, foo_tests, {ok, foo}}
+    ],
+    Forms = lists:map(
+        fun({Source, ModuleName, TestModuleName, TestedModuleResult}) ->
+            {to_form(Source), ModuleName, TestModuleName, TestedModuleResult}
+        end,
+        Modules
+    ),
+    ModuleNames = lists:map(
+        fun({Forms, ModuleName, _, _}) -> {find_module_name(Forms), ModuleName} end, Forms
+    ),
+    TestedModuleNames = lists:map(
+        fun({_, ModuleName, _, TestedModuleResult}) ->
+            {extract_tested_module(ModuleName), TestedModuleResult}
+        end,
+        Forms
+    ),
+    ModuleNameTests = lists:map(
+        fun({Act, Exp}) ->
+            {to_test_name("module name", Exp, Act), ?_assertMatch({ok, Exp}, Act)}
+        end,
+        ModuleNames
+    ),
+    TestedModuleNameTests = lists:map(
+        fun({Act, Exp}) ->
+            {to_test_name("tested module name", Exp, Act), ?_assertMatch(Exp, Act)}
+        end,
+        TestedModuleNames
+    ),
+    ModuleNameTests ++ TestedModuleNameTests.
 
 -endif.
