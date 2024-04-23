@@ -27,8 +27,8 @@ is_example() ->
     lists:member("example.erl", Files).
 
 find_module_name([]) -> {error, notfound};
-find_module_name([{attribute,_Line,module,Module}|_]) -> {ok, Module};
-find_module_name([_|T]) -> find_module_name(T).
+find_module_name([{attribute, _Line, module, Module} | _]) -> {ok, Module};
+find_module_name([_ | T]) -> find_module_name(T).
 
 extract_tested_module(ModuleName) when is_atom(ModuleName) ->
     ModuleName1 = atom_to_list(ModuleName),
@@ -57,28 +57,76 @@ do_transform(_Form, _ModuleName) ->
 
 -define(_assertExtract(Exp, Module), ?_assertMatch(Exp, extract_tested_module(Module))).
 
+to_test_name(Text, Exp, Act) ->
+    IoList = io_lib:format("~s (~p; ~p)", [Text, Exp, Act]),
+    erlang:iolist_to_binary(IoList).
+
 to_form(String) ->
     {ok, Tokens, _} = erl_scan:string(String),
     {ok, Form} = erl_parse:parse_form(Tokens),
     case is_list(Form) of
-        true  -> Form;
+        true -> Form;
         false -> [Form]
     end.
 
 extract_tested_module_test_() ->
-    [?_assertExtract({ok, hello_world}, hello_world_tests)
-    ,?_assertExtract({ok, zipper},      zipper_tests)
-    ,?_assertExtract(error,             hello_world)
-    ,?_assertExtract(error,             zipper)
+    [
+        ?_assertExtract({ok, hello_world}, hello_world_tests),
+        ?_assertExtract({ok, zipper}, zipper_tests),
+        ?_assertExtract(error, hello_world),
+        ?_assertExtract(error, zipper)
     ].
 
 transform_test_() ->
     Lines =
-        [ {"f() -> foo:bar().",          "f() -> example:bar().",              foo}
-        , {"f() -> foo:bar(foo:bar()).", "f() -> example:bar(example:bar()).", foo}
-        , {"f() -> foo:bar(foo:bar()).", "f() -> foo:bar(foo:bar()).",         bar}],
+        [
+            {"f() -> foo:bar().", "f() -> example:bar().", foo},
+            {"f() -> foo:bar(foo:bar()).", "f() -> example:bar(example:bar()).", foo},
+            {"f() -> foo:bar(foo:bar()).", "f() -> foo:bar(foo:bar()).", bar},
+            {"f() -> foo:bar(bar:bar()).", "f() -> foo:bar(example:bar()).", bar},
+            {"f() -> bar:bar(foo:bar()).", "f() -> example:bar(foo:bar()).", bar}
+        ],
     Forms = lists:map(fun({From, To, Remote}) -> {to_form(From), to_form(To), Remote} end, Lines),
-    Transformed = lists:map(fun({From, To, Remote}) -> {parse_trans:plain_transform(transform_fun(Remote), From), To} end, Forms),
+    Transformed = lists:map(
+        fun({From, To, Remote}) ->
+            {parse_trans:plain_transform(transform_fun(Remote), From), To}
+        end,
+        Forms
+    ),
     lists:map(fun({Act, Exp}) -> ?_assertMatch(Exp, Act) end, Transformed).
+
+find_module_name_test_() ->
+    Modules = [
+        {"-module(foo).", foo, foo_tests, error},
+        {"-module(foo_tests).", foo_tests, foo_tests, {ok, foo}}
+    ],
+    Forms = lists:map(
+        fun({Source, ModuleName, TestModuleName, TestedModuleResult}) ->
+            {to_form(Source), ModuleName, TestModuleName, TestedModuleResult}
+        end,
+        Modules
+    ),
+    ModuleNames = lists:map(
+        fun({Forms, ModuleName, _, _}) -> {find_module_name(Forms), ModuleName} end, Forms
+    ),
+    TestedModuleNames = lists:map(
+        fun({_, ModuleName, _, TestedModuleResult}) ->
+            {extract_tested_module(ModuleName), TestedModuleResult}
+        end,
+        Forms
+    ),
+    ModuleNameTests = lists:map(
+        fun({Act, Exp}) ->
+            {to_test_name("module name", Exp, Act), ?_assertMatch({ok, Exp}, Act)}
+        end,
+        ModuleNames
+    ),
+    TestedModuleNameTests = lists:map(
+        fun({Act, Exp}) ->
+            {to_test_name("tested module name", Exp, Act), ?_assertMatch(Exp, Act)}
+        end,
+        TestedModuleNames
+    ),
+    ModuleNameTests ++ TestedModuleNameTests.
 
 -endif.
