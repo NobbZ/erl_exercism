@@ -7,17 +7,17 @@ jobs:
     outputs:
       otps: ${{ steps.versions.outputs.versions }}
     steps:
-    - name: Clone the repository
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
-    - name: Get latest OTP versions
-      id: versions
-      env: 
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        set -ex
-        all_versions=$(gh api graphql -f query='query { repository(owner: "erlang", name: "otp") { releases(last: 100) { nodes { tagName } } } }' --jq '.data.repository.releases.nodes[].tagName | select(. | contains("rc") | not) | .[4:8]' | sort -u -n)
-        latest_versions=$(./.github/bin/get_latest_majors_for_ci_matrix.py <<< "$all_versions")
-        printf "::set-output name=versions::%s" "$latest_versions"
+      - name: Clone the repository
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
+      - name: Get latest OTP versions
+        id: versions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -ex
+          all_versions=$(gh api graphql -f query='query { repository(owner: "erlang", name: "otp") { releases(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { nodes {tagName} } } }' --jq '.data.repository.releases.nodes[].tagName | select(. | contains("rc") | not) | .[4:8]' | sort -u -n)
+          latest_versions=$(./.github/bin/get_latest_majors_for_ci_matrix.py <<< "$all_versions")
+          printf "::set-output name=versions::%s" "$latest_versions"
 
   test:
     runs-on: ubuntu-20.04
@@ -27,12 +27,12 @@ jobs:
       matrix:
         otp: ${{fromJson(needs.create_otp_matrix.outputs.otps)}}
         exclude:
-        - otp: '21.3'
+          - otp: "21.3"
     steps:
       - uses: actions/checkout@v2
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
-          rebar3-version: '3.18.0'
+          rebar3-version: "3.18.0"
       - run: rebar3 compile
       - run: rebar3 eunit
