@@ -8,10 +8,10 @@
     inherit (pkgs.lib) optionalString;
 
     beamPkgs = let bn = pkgs.beam_nox; in bn.packagesWith bn.interpreters.erlangR25;
-    inherit (beamPkgs) erlang;
+    inherit (beamPkgs) erlang rebar3;
   in {
-    devShell = pkgs.mkShell {
-      packages = [erlang];
+    devShells.x86_64-linux.default = pkgs.mkShell {
+      packages = [erlang rebar3];
 
       LOCALE_ARCHIVE = optionalString isLinux "${glibcLocales}/lib/locale/locale-archive";
       LANG = "en_US.UTF-8";
