@@ -17,7 +17,7 @@ jobs:
           set -ex
           all_versions=$(gh api graphql -f query='query { repository(owner: "erlang", name: "otp") { releases(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { nodes {tagName} } } }' --jq '.data.repository.releases.nodes[].tagName | select(. | contains("rc") | not) | .[4:8]' | sort -u -n)
           latest_versions=$(./.github/bin/get_latest_majors_for_ci_matrix.py <<< "$all_versions")
-          printf "::set-output name=versions::%s" "$latest_versions"
+          printf "versions=%s" "$latest_versions" >> $GITHUB_OUTPUT
 
   test:
     runs-on: ubuntu-20.04
