@@ -82,7 +82,9 @@ transform_test_() ->
         [
             {"f() -> foo:bar().", "f() -> example:bar().", foo},
             {"f() -> foo:bar(foo:bar()).", "f() -> example:bar(example:bar()).", foo},
-            {"f() -> foo:bar(foo:bar()).", "f() -> foo:bar(foo:bar()).", bar}
+            {"f() -> foo:bar(foo:bar()).", "f() -> foo:bar(foo:bar()).", bar},
+            {"f() -> foo:bar(bar:bar()).", "f() -> foo:bar(example:bar()).", bar},
+            {"f() -> bar:bar(foo:bar()).", "f() -> example:bar(foo:bar()).", bar}
         ],
     Forms = lists:map(fun({From, To, Remote}) -> {to_form(From), to_form(To), Remote} end, Lines),
     Transformed = lists:map(
