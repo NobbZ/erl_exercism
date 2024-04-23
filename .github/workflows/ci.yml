@@ -8,7 +8,7 @@ jobs:
       otps: ${{ steps.versions.outputs.versions }}
     steps:
       - name: Clone the repository
-        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
+        uses: actions/checkout@v4.1.3
       - name: Get latest OTP versions
         id: versions
         env:
@@ -29,7 +29,7 @@ jobs:
         exclude:
           - otp: "21.3"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4.1.3
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
