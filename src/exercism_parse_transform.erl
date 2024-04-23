@@ -1,3 +1,18 @@
+%% @doc This module provides a parse transform to replace remote calls into the
+%% module under test with calls into the example implementation if necessary.
+%% 
+%% To use this parse transform, add the following to your testing module:
+%% 
+%% ```
+%% -include_lib("erl_exercism/include/exercism.hrl").
+%% '''
+%% 
+%% Given a testing module `M_tests', all remote calls into `M' will be replaced
+%% with calls into `example' if the module `example' is present in the project.
+%% 
+%% "Available" means, the file `src/example.erl' does exist.
+%% @end
+
 -module(exercism_parse_transform).
 
 %% API exports
